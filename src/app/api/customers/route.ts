@@ -1,16 +1,14 @@
 import { NextResponse } from "next/server";
-import { getOrders } from "@/services/orders";
+import { getCustomers } from "@/services/lookups";
 
 export async function GET() {
   try {
-    const orders = await getOrders();
-
-    return NextResponse.json(orders);
+    return NextResponse.json(await getCustomers());
   } catch (error) {
     console.error(error);
 
     return NextResponse.json(
-      { error: "Unable to load orders." },
+      { error: "Unable to load customers." },
       { status: 500 }
     );
   }

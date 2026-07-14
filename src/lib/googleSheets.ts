@@ -24,3 +24,17 @@ export async function getSheetValues(sheetName: string) {
 
   return response.data.values ?? [];
 }
+
+export async function appendSheetValues(
+  sheetName: string,
+  values: string[][]
+) {
+  await sheets.spreadsheets.values.append({
+    spreadsheetId: process.env.GOOGLE_SHEET_ID!,
+    range: `${sheetName}!A:G`,
+    valueInputOption: "USER_ENTERED",
+    requestBody: {
+      values,
+    },
+  });
+}

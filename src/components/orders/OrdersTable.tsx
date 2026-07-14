@@ -1,8 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+
+import OrdersPageHeader from "./OrdersPageHeader";
+import OrdersToolbar from "./OrdersToolbar";
+import OrdersList from "./OrdersList";
 import OrderDetails from "./OrderDetails";
-import OrderCard from "./OrderCard";
+import NewOrderDialog from "./dialogs/NewOrderDialog";
 
 type Order = {
   customer: string;
@@ -20,6 +24,10 @@ export default function OrdersTable() {
   const [selectedOrder, setSelectedOrder] =
     useState<Order | null>(null);
 
+  const [search, setSearch] = useState("");
+  const [status, setStatus] = useState("All");
+  const [showNewOrder, setShowNewOrder] = useState(false);
+
   useEffect(() => {
     async function loadOrders() {
       const res = await fetch("/api/orders");
@@ -35,34 +43,77 @@ export default function OrdersTable() {
     loadOrders();
   }, []);
 
+  const filteredOrders = useMemo(() => {
+    return orders.filter((order) => {
+      const matchesSearch =
+        order.customer
+          .toLowerCase()
+          .includes(search.toLowerCase()) ||
+        order.items.some(
+          (item) =>
+            item.item
+              .toLowerCase()
+              .includes(search.toLowerCase()) ||
+            item.color
+              .toLowerCase()
+              .includes(search.toLowerCase())
+        );
+
+      const matchesStatus =
+        status === "All" || order.status === status;
+
+      return matchesSearch && matchesStatus;
+    });
+  }, [orders, search, status]);
+
+  useEffect(() => {
+    if (
+      selectedOrder &&
+      !filteredOrders.includes(selectedOrder)
+    ) {
+      setSelectedOrder(filteredOrders[0] ?? null);
+    }
+
+    if (!selectedOrder && filteredOrders.length > 0) {
+      setSelectedOrder(filteredOrders[0]);
+    }
+  }, [filteredOrders, selectedOrder]);
+
   return (
-    <div className="grid gap-6 xl:grid-cols-[420px_1fr]">
+    <div className="space-y-6">
 
-      {/* Left Side */}
+      <OrdersPageHeader
+        onNewOrder={() => setShowNewOrder(true)}
+      />
 
-      <div className="space-y-4">
+      <OrdersToolbar
+        search={search}
+        setSearch={setSearch}
+        status={status}
+        setStatus={setStatus}
+      />
 
-        {orders.map((order, index) => (
+      <div className="grid gap-6 xl:grid-cols-[420px_1fr]">
 
-          <OrderCard
-            key={index}
-            order={order}
-            selected={selectedOrder === order}
-            onClick={() => setSelectedOrder(order)}
-          />
+        <OrdersList
+          orders={filteredOrders}
+          selectedOrder={selectedOrder}
+          onSelect={setSelectedOrder}
+        />
 
-        ))}
+        <div className="overflow-hidden rounded-2xl border border-slate-700 bg-slate-900/60 min-h-[700px]">
+
+          <OrderDetails order={selectedOrder} />
+
+        </div>
 
       </div>
 
-      {/* Right Side */}
+    <NewOrderDialog
+      open={showNewOrder}
+      onClose={() => setShowNewOrder(false)}
+    />
 
-      <div className="overflow-hidden rounded-2xl border border-slate-700 bg-slate-900/60 min-h-[700px]">
-
-        <OrderDetails order={selectedOrder} />
-
-      </div>
-
-    </div>
+  </div>
   );
 }
