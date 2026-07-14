@@ -1,5 +1,7 @@
+"use client";
 import Image from "next/image";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import {
   LayoutDashboard,
   Package,
@@ -49,6 +51,8 @@ const menuItems = [
 ];
 
 export default function Sidebar() {
+  const pathname = usePathname();
+
   return (
     <aside className="w-72 bg-slate-950 border-r border-slate-800 flex flex-col">
 
@@ -83,7 +87,11 @@ export default function Sidebar() {
             <Link
               key={item.name}
               href={item.href}
-              className="flex items-center gap-3 rounded-xl px-4 py-3 text-slate-300 transition hover:bg-slate-800 hover:text-white"
+              className={`flex items-center gap-3 rounded-xl px-4 py-3 transition ${
+               pathname === item.href
+                 ? "bg-blue-600 text-white shadow-lg"
+                 : "text-slate-300 hover:bg-slate-800 hover:text-white"
+              }`}
             >
               <Icon size={20} />
               {item.name}
