@@ -9,6 +9,7 @@ import OrderDetails from "./OrderDetails";
 import OrderDialog from "./dialogs/OrderDialog";
 
 type Order = {
+  id: string;
   customer: string;
   dueDate: string;
   status: string;
@@ -105,6 +106,40 @@ export default function OrdersTable() {
     setShowDialog(true);
   }
 
+  async function deleteSelectedOrder() {
+
+   if (!selectedOrder) return;
+
+   const confirmed = window.confirm(
+     `Delete order "${selectedOrder.id}"?\n\nThis cannot be undone.`
+    );
+
+   if (!confirmed) {
+     return;
+    }
+
+   const response = await fetch(
+     "/api/orders/delete",
+    {
+       method: "POST",
+       headers: {
+         "Content-Type": "application/json",
+        },
+       body: JSON.stringify({
+         orderId: selectedOrder.id,
+        }),
+      }
+    );
+
+   if (!response.ok) {
+     alert("Unable to delete order.");
+     return;
+    }
+
+   await loadOrders();
+
+  }
+
   return (
     <div className="space-y-6">
 
@@ -132,6 +167,7 @@ export default function OrdersTable() {
           <OrderDetails
             order={selectedOrder}
             onEdit={openEditOrder}
+            onDelete={deleteSelectedOrder}
           />
 
         </div>

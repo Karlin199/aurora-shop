@@ -172,3 +172,22 @@ export async function updateOrder(
   );
 
 }
+
+export async function deleteOrder(
+  orderId: string
+) {
+  const sheet = await getSheetValues("Orders");
+
+  if (sheet.length <= 1) {
+    return;
+  }
+
+  const remainingRows = sheet
+    .slice(1)
+    .filter((row) => row[0] !== orderId);
+
+  await replaceSheetValues(
+    "Orders",
+    remainingRows
+  );
+}

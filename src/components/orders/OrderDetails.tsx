@@ -12,11 +12,13 @@ type Order = {
 type Props = {
   order: Order | null;
   onEdit: () => void;
+  onDelete: () => void;
 };
 
 export default function OrderDetails({
   order,
   onEdit,
+  onDelete,
 }: Props) {
   if (!order) {
     return (
@@ -107,15 +109,24 @@ export default function OrderDetails({
 
         <div className="flex gap-3">
 
-          <button
-            onClick={onEdit}
-            className="flex-1 rounded-xl bg-blue-600 py-3 hover:bg-blue-500 transition"
+         <button
+           onClick={onEdit}
+           className="flex-1 rounded-xl bg-blue-600 py-3 hover:bg-blue-500 transition"
           >
-            Edit
+           Edit
           </button>
 
-          <button className="flex-1 rounded-xl bg-slate-700 py-3 hover:bg-slate-600 transition">
-            Print
+          <button
+           onClick={onDelete}
+           className="flex-1 rounded-xl bg-red-600 py-3 hover:bg-red-500 transition"
+          >
+           Delete
+          </button>
+
+          <button
+           className="flex-1 rounded-xl bg-slate-700 py-3 hover:bg-slate-600 transition"
+          >
+           Print
           </button>
 
         </div>
