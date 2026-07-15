@@ -11,9 +11,13 @@ type Order = {
 
 type Props = {
   order: Order | null;
+  onEdit: () => void;
 };
 
-export default function OrderDetails({ order }: Props) {
+export default function OrderDetails({
+  order,
+  onEdit,
+}: Props) {
   if (!order) {
     return (
       <div className="flex h-full items-center justify-center text-slate-500">
@@ -26,18 +30,36 @@ export default function OrderDetails({ order }: Props) {
     <div className="flex h-full flex-col">
 
       <div className="border-b border-slate-700 p-6">
-        <h2 className="text-2xl font-bold">
-          {order.customer}
-        </h2>
 
-        <p className="mt-2 text-slate-400">
-          Due {new Date(order.dueDate).toLocaleDateString()}
-        </p>
+        <div className="flex items-start justify-between">
+
+          <div>
+
+            <h2 className="text-2xl font-bold">
+              {order.customer}
+            </h2>
+
+            <p className="mt-2 text-slate-400">
+              Due {new Date(order.dueDate).toLocaleDateString()}
+            </p>
+
+          </div>
+
+          <button
+            onClick={onEdit}
+            className="rounded-xl bg-blue-600 px-4 py-2 hover:bg-blue-500 transition"
+          >
+            Edit Order
+          </button>
+
+        </div>
+
       </div>
 
-      <div className="flex-1 space-y-4 overflow-y-auto p-6">
+      <div className="flex-1 overflow-y-auto p-6 space-y-6">
 
         <div>
+
           <div className="text-sm text-slate-500">
             Status
           </div>
@@ -45,6 +67,7 @@ export default function OrderDetails({ order }: Props) {
           <div className="mt-1 text-lg">
             {order.status}
           </div>
+
         </div>
 
         <div>
@@ -53,10 +76,10 @@ export default function OrderDetails({ order }: Props) {
             Products
           </div>
 
-          {order.items.map((item, i) => (
+          {order.items.map((item, index) => (
 
             <div
-              key={i}
+              key={index}
               className="mb-3 rounded-xl border border-slate-700 p-4"
             >
 
@@ -84,11 +107,14 @@ export default function OrderDetails({ order }: Props) {
 
         <div className="flex gap-3">
 
-          <button className="flex-1 rounded-xl bg-blue-600 py-3 hover:bg-blue-500">
+          <button
+            onClick={onEdit}
+            className="flex-1 rounded-xl bg-blue-600 py-3 hover:bg-blue-500 transition"
+          >
             Edit
           </button>
 
-          <button className="flex-1 rounded-xl bg-slate-700 py-3 hover:bg-slate-600">
+          <button className="flex-1 rounded-xl bg-slate-700 py-3 hover:bg-slate-600 transition">
             Print
           </button>
 

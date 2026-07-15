@@ -6,7 +6,7 @@ import OrdersPageHeader from "./OrdersPageHeader";
 import OrdersToolbar from "./OrdersToolbar";
 import OrdersList from "./OrdersList";
 import OrderDetails from "./OrderDetails";
-import NewOrderDialog from "./dialogs/NewOrderDialog";
+import OrderDialog from "./dialogs/OrderDialog";
 
 type Order = {
   customer: string;
@@ -26,7 +26,12 @@ export default function OrdersTable() {
 
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("All");
-  const [showNewOrder, setShowNewOrder] = useState(false);
+
+  const [showDialog, setShowDialog] = useState(false);
+
+  const [dialogMode, setDialogMode] = useState<
+    "new" | "edit"
+  >("new");
 
   async function loadOrders() {
     const res = await fetch("/api/orders");
@@ -62,9 +67,13 @@ export default function OrdersTable() {
         );
 
       const matchesStatus =
-        status === "All" || order.status === status;
+        status === "All" ||
+        order.status === status;
 
-      return matchesSearch && matchesStatus;
+      return (
+        matchesSearch &&
+        matchesStatus
+      );
     });
   }, [orders, search, status]);
 
@@ -76,16 +85,31 @@ export default function OrdersTable() {
       setSelectedOrder(filteredOrders[0] ?? null);
     }
 
-    if (!selectedOrder && filteredOrders.length > 0) {
+    if (
+      !selectedOrder &&
+      filteredOrders.length > 0
+    ) {
       setSelectedOrder(filteredOrders[0]);
     }
   }, [filteredOrders, selectedOrder]);
+
+  function openNewOrder() {
+    setDialogMode("new");
+    setShowDialog(true);
+  }
+
+  function openEditOrder() {
+    if (!selectedOrder) return;
+
+    setDialogMode("edit");
+    setShowDialog(true);
+  }
 
   return (
     <div className="space-y-6">
 
       <OrdersPageHeader
-        onNewOrder={() => setShowNewOrder(true)}
+        onNewOrder={openNewOrder}
       />
 
       <OrdersToolbar
@@ -105,18 +129,23 @@ export default function OrdersTable() {
 
         <div className="overflow-hidden rounded-2xl border border-slate-700 bg-slate-900/60 min-h-[700px]">
 
-          <OrderDetails order={selectedOrder} />
+          <OrderDetails
+            order={selectedOrder}
+            onEdit={openEditOrder}
+          />
 
         </div>
 
       </div>
 
-      <NewOrderDialog
-        open={showNewOrder}
-        onClose={() => setShowNewOrder(false)}
+      <OrderDialog
+        open={showDialog}
+        mode={dialogMode}
+        order={selectedOrder}
+        onClose={() => setShowDialog(false)}
         onSaved={async () => {
           await loadOrders();
-          setShowNewOrder(false);
+          setShowDialog(false);
         }}
       />
 
