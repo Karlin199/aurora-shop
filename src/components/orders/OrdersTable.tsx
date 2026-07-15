@@ -28,18 +28,20 @@ export default function OrdersTable() {
   const [status, setStatus] = useState("All");
   const [showNewOrder, setShowNewOrder] = useState(false);
 
-  useEffect(() => {
-    async function loadOrders() {
-      const res = await fetch("/api/orders");
-      const data = await res.json();
+  async function loadOrders() {
+    const res = await fetch("/api/orders");
+    const data = await res.json();
 
-      setOrders(data);
+    setOrders(data);
 
-      if (data.length > 0) {
-        setSelectedOrder(data[0]);
-      }
+    if (data.length > 0) {
+      setSelectedOrder(data[0]);
+    } else {
+      setSelectedOrder(null);
     }
+  }
 
+  useEffect(() => {
     loadOrders();
   }, []);
 
@@ -109,11 +111,15 @@ export default function OrdersTable() {
 
       </div>
 
-    <NewOrderDialog
-      open={showNewOrder}
-      onClose={() => setShowNewOrder(false)}
-    />
+      <NewOrderDialog
+        open={showNewOrder}
+        onClose={() => setShowNewOrder(false)}
+        onSaved={async () => {
+          await loadOrders();
+          setShowNewOrder(false);
+        }}
+      />
 
-  </div>
+    </div>
   );
 }

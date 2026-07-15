@@ -5,26 +5,131 @@ import { useState } from "react";
 import Modal from "@/components/ui/Modal";
 import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
+import Select from "@/components/ui/Select";
 
 import ProductRow from "../ProductRow";
+
+import useLookup from "@/hooks/useLookup";
+
+import type { NewOrderProduct } from "@/types/newOrder";
 
 type Props = {
   open: boolean;
   onClose: () => void;
+  onSaved: () => Promise<void>;
 };
 
 export default function NewOrderDialog({
   open,
   onClose,
+  onSaved,
 }: Props) {
-  const [rows, setRows] = useState<number[]>([]);
+  const { items: customers } = useLookup("/api/customers");
+
+  const [customer, setCustomer] = useState("");
+  const [dueDate, setDueDate] = useState("");
+
+  const [products, setProducts] = useState<NewOrderProduct[]>([]);
+
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
+
+  function resetForm() {
+    setCustomer("");
+    setDueDate("");
+    setProducts([]);
+    setError("");
+  }
 
   function addProduct() {
-    setRows((current) => [...current, Date.now()]);
+    setProducts((current) => [
+      ...current,
+      {
+        id: Date.now(),
+        item: "",
+        color: "",
+        qty: 1,
+      },
+    ]);
+  }
+
+  function updateProduct(updated: NewOrderProduct) {
+    setProducts((current) =>
+      current.map((product) =>
+        product.id === updated.id ? updated : product
+      )
+    );
   }
 
   function removeProduct(id: number) {
-    setRows((current) => current.filter((row) => row !== id));
+    setProducts((current) =>
+      current.filter((product) => product.id !== id)
+    );
+  }
+
+  async function saveOrder() {
+    setError("");
+
+    if (!customer) {
+      setError("Please select a customer.");
+      return;
+    }
+
+    if (!dueDate) {
+      setError("Please choose a due date.");
+      return;
+    }
+
+    if (products.length === 0) {
+      setError("Please add at least one product.");
+      return;
+    }
+
+    for (const product of products) {
+      if (
+        !product.item ||
+        !product.color ||
+        product.qty < 1
+      ) {
+        setError("Please complete all product fields.");
+        return;
+      }
+    }
+
+    try {
+      setSaving(true);
+
+      const response = await fetch(
+        "/api/orders/create",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            customer,
+            dueDate,
+            products,
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error();
+      }
+
+      resetForm();
+
+      await onSaved();
+
+      onClose();
+    } catch {
+      setError(
+        "Unable to save the order. Please try again."
+      );
+    } finally {
+      setSaving(false);
+    }
   }
 
   return (
@@ -35,16 +140,42 @@ export default function NewOrderDialog({
     >
       <div className="space-y-6">
 
+        {error && (
+          <div className="rounded-xl border border-red-600 bg-red-950 px-4 py-3 text-red-300">
+            {error}
+          </div>
+        )}
+
         <div className="grid gap-6 md:grid-cols-2">
 
-          <Input
+          <Select
             label="Customer"
-            placeholder="Customer name..."
-          />
+            value={customer}
+            onChange={(e) =>
+              setCustomer(e.target.value)
+            }
+          >
+            <option value="">
+              Select customer...
+            </option>
+
+            {customers.map((customer) => (
+              <option
+                key={customer.name}
+                value={customer.name}
+              >
+                {customer.name}
+              </option>
+            ))}
+          </Select>
 
           <Input
             label="Due Date"
             type="date"
+            value={dueDate}
+            onChange={(e) =>
+              setDueDate(e.target.value)
+            }
           />
 
         </div>
@@ -68,23 +199,21 @@ export default function NewOrderDialog({
 
           <div className="mt-6 space-y-4">
 
-            {rows.length === 0 && (
-
+            {products.length === 0 && (
               <div className="rounded-xl border border-dashed border-slate-600 p-8 text-center text-slate-500">
-
                 No products added yet.
-
               </div>
-
             )}
 
-            {rows.map((id) => (
-
+            {products.map((product) => (
               <ProductRow
-                key={id}
-                onRemove={() => removeProduct(id)}
+                key={product.id}
+                product={product}
+                onChange={updateProduct}
+                onRemove={() =>
+                  removeProduct(product.id)
+                }
               />
-
             ))}
 
           </div>
@@ -95,18 +224,26 @@ export default function NewOrderDialog({
 
           <Button
             variant="secondary"
-            onClick={onClose}
+            onClick={() => {
+              resetForm();
+              onClose();
+            }}
+            disabled={saving}
           >
             Cancel
           </Button>
 
-          <Button>
-            Save Order
+          <Button
+            onClick={saveOrder}
+            disabled={saving}
+          >
+            {saving ? "Saving..." : "Save Order"}
           </Button>
 
         </div>
 
       </div>
+
     </Modal>
   );
 }
