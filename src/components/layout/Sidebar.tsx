@@ -7,9 +7,11 @@ import {
   Package,
   Boxes,
   ClipboardList,
+  Users,
   MonitorCog,
   BarChart3,
   Settings,
+  BadgeDollarSign,
 } from "lucide-react";
 
 const menuItems = [
@@ -29,14 +31,24 @@ const menuItems = [
     icon: Boxes,
   },
   {
-    name: "Cut Lists",
-    href: "/cut-lists",
+    name: "Production",
+    href: "/production",
     icon: ClipboardList,
   },
   {
     name: "CNC Files",
     href: "/cnc",
     icon: MonitorCog,
+  },
+  {
+   name: "Piecework",
+   href: "/piecework",
+   icon: Users,
+  },
+  {
+   name: "Payroll",
+   href: "/payroll",
+   icon: BadgeDollarSign,
   },
   {
     name: "Reports",

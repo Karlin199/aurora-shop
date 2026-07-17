@@ -1,67 +1,20 @@
-export type DashboardStats = {
-  outstandingOrders: number;
-  partsToCut: number;
-  inventoryAlerts: number;
-  completedThisWeek: number;
-};
+import { getDashboardOrders } from "./orders";
 
-export type ProductionJob = {
-  customer: string;
-  item: string;
-  due: string;
-};
+export async function getDashboardData() {
+  const orders = await getDashboardOrders();
 
-export type DueOrder = {
-  customer: string;
-  due: string;
-  color: string;
-};
+  const outstandingOrders =
+    orders.filter(o => o.status !== "Completed").length;
 
-export async function getDashboardStats(): Promise<DashboardStats> {
   return {
-    outstandingOrders: 18,
-    partsToCut: 42,
-    inventoryAlerts: 5,
-    completedThisWeek: 21,
+    outstandingOrders,
+
+    partsToCut: 0,
+    inventoryAlerts: 0,
+    completedThisWeek: 0,
+
+    productionQueue: [],
+
+    upcomingOrders: [],
   };
-}
-
-export async function getProductionQueue(): Promise<ProductionJob[]> {
-  return [
-    {
-      customer: "Smith",
-      item: "2 Luxe Gliders",
-      due: "Today",
-    },
-    {
-      customer: "Brown",
-      item: "4 Sapphire Chairs",
-      due: "Tomorrow",
-    },
-    {
-      customer: "Johnson",
-      item: "1 Luxe Table",
-      due: "Friday",
-    },
-  ];
-}
-
-export async function getDueOrders(): Promise<DueOrder[]> {
-  return [
-    {
-      customer: "Smith",
-      due: "Today",
-      color: "text-red-400",
-    },
-    {
-      customer: "Brown",
-      due: "Tomorrow",
-      color: "text-yellow-400",
-    },
-    {
-      customer: "Johnson",
-      due: "Friday",
-      color: "text-green-400",
-    },
-  ];
 }

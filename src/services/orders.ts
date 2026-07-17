@@ -191,3 +191,93 @@ export async function deleteOrder(
     remainingRows
   );
 }
+
+export async function completeOrder(
+  orderId: string
+) {
+
+  const sheet = await getSheetValues("Orders");
+
+  if (sheet.length <= 1) {
+    return;
+  }
+
+  const today = new Date().toISOString().slice(0, 10);
+
+  const updatedRows = sheet
+    .slice(1)
+    .map((row) => {
+
+      if (row[0] !== orderId) {
+        return row;
+      }
+
+      return [
+        row[0], // Order ID
+        row[1], // Customer
+        row[2], // Item
+        row[3], // Colour
+        row[4], // Qty
+        row[5], // Due Date
+        "Completed",
+        today,
+      ];
+
+    });
+
+  await replaceSheetValues(
+    "Orders",
+    updatedRows
+  );
+
+}
+
+export async function getDashboardOrders() {
+  const rows = await getSheetValues("Orders");
+
+  if (rows.length <= 1) {
+    return [];
+  }
+
+  const grouped = new Map<
+    string,
+    {
+      id: string;
+      customer: string;
+      dueDate: string;
+      status: string;
+      completedDate: string;
+      items: OrderItem[];
+    }
+  >();
+
+  for (const row of rows.slice(1)) {
+    const id = row[0] ?? "";
+    const customer = row[1] ?? "";
+    const item = row[2] ?? "";
+    const color = row[3] ?? "";
+    const qty = row[4] ?? "";
+    const dueDate = row[5] ?? "";
+    const status = row[6] ?? "";
+    const completedDate = row[7] ?? "";
+
+    if (!grouped.has(id)) {
+      grouped.set(id, {
+        id,
+        customer,
+        dueDate,
+        status,
+        completedDate,
+        items: [],
+      });
+    }
+
+    grouped.get(id)!.items.push({
+      item,
+      color,
+      qty,
+    });
+  }
+
+  return [...grouped.values()];
+}

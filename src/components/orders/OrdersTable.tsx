@@ -120,7 +120,7 @@ export default function OrdersTable() {
 
    const response = await fetch(
      "/api/orders/delete",
-    {
+     {
        method: "POST",
        headers: {
          "Content-Type": "application/json",
@@ -133,6 +133,40 @@ export default function OrdersTable() {
 
    if (!response.ok) {
      alert("Unable to delete order.");
+     return;
+    }
+
+   await loadOrders();
+
+  }
+
+  async function completeSelectedOrder() {
+
+   if (!selectedOrder) return;
+
+   const confirmed = window.confirm(
+     `Mark order "${selectedOrder.id}" as completed?`
+    );
+
+   if (!confirmed) {
+     return;
+    }
+
+   const response = await fetch(
+     "/api/orders/complete",
+     {
+       method: "POST",
+       headers: {
+         "Content-Type": "application/json",
+        },
+       body: JSON.stringify({
+         orderId: selectedOrder.id,
+        }),
+      }
+    );
+
+   if (!response.ok) {
+     alert("Unable to complete order.");
      return;
     }
 
@@ -168,6 +202,7 @@ export default function OrdersTable() {
             order={selectedOrder}
             onEdit={openEditOrder}
             onDelete={deleteSelectedOrder}
+            onComplete={completeSelectedOrder}
           />
 
         </div>

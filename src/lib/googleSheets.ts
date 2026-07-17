@@ -180,3 +180,33 @@ export async function replaceSheetValues(
   });
 
 }
+
+export async function updateCell(
+  sheetName: string,
+  row: number,
+  column: number,
+  value: string | number
+) {
+  function columnLetter(col: number): string {
+    let letter = "";
+
+    while (col > 0) {
+      const mod = (col - 1) % 26;
+      letter = String.fromCharCode(65 + mod) + letter;
+      col = Math.floor((col - mod) / 26);
+    }
+
+    return letter;
+  }
+
+  const cell = `${columnLetter(column)}${row}`;
+
+  await sheets.spreadsheets.values.update({
+    spreadsheetId,
+    range: `${sheetName}!${cell}`,
+    valueInputOption: "USER_ENTERED",
+    requestBody: {
+      values: [[value]],
+    },
+  });
+}
