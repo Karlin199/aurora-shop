@@ -138,12 +138,12 @@ export async function getProduction(): Promise<ProductionMachine[]> {
   for (const requirement of requirements.values()) {
 
     const stock = inventory.find(
-      (i) =>
-        i.part === requirement.part &&
-        i.color === requirement.color
+     (i) =>
+       i.part === requirement.part &&
+       i.colour === requirement.color
     );
 
-    const inStock = stock?.inStock ?? 0;
+    const inStock = stock?.quantity ?? 0;
 
     const toCut =
       Math.max(

@@ -8,6 +8,9 @@ import OrdersList from "./OrdersList";
 import OrderDetails from "./OrderDetails";
 import OrderDialog from "./dialogs/OrderDialog";
 
+import ConfirmDialog from "@/components/ui/ConfirmDialog";
+import SuccessDialog from "@/components/ui/SuccessDialog";
+
 type Order = {
   id: string;
   customer: string;
@@ -33,6 +36,17 @@ export default function OrdersTable() {
   const [dialogMode, setDialogMode] = useState<
     "new" | "edit"
   >("new");
+
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [confirmType, setConfirmType] = useState<
+    "delete" | "complete"
+  >("complete");
+
+  const [working, setWorking] = useState(false);
+
+  const [successOpen, setSuccessOpen] = useState(false);
+  const [successTitle, setSuccessTitle] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
 
   async function loadOrders() {
     const res = await fetch("/api/orders");
@@ -106,72 +120,83 @@ export default function OrdersTable() {
     setShowDialog(true);
   }
 
-  async function deleteSelectedOrder() {
+  function deleteSelectedOrder() {
+    if (!selectedOrder) return;
 
-   if (!selectedOrder) return;
-
-   const confirmed = window.confirm(
-     `Delete order "${selectedOrder.id}"?\n\nThis cannot be undone.`
-    );
-
-   if (!confirmed) {
-     return;
-    }
-
-   const response = await fetch(
-     "/api/orders/delete",
-     {
-       method: "POST",
-       headers: {
-         "Content-Type": "application/json",
-        },
-       body: JSON.stringify({
-         orderId: selectedOrder.id,
-        }),
-      }
-    );
-
-   if (!response.ok) {
-     alert("Unable to delete order.");
-     return;
-    }
-
-   await loadOrders();
-
+    setConfirmType("delete");
+    setConfirmOpen(true);
   }
 
-  async function completeSelectedOrder() {
+  function completeSelectedOrder() {
+    if (!selectedOrder) return;
 
-   if (!selectedOrder) return;
+    setConfirmType("complete");
+    setConfirmOpen(true);
+  }
 
-   const confirmed = window.confirm(
-     `Mark order "${selectedOrder.id}" as completed?`
-    );
+  async function handleConfirm() {
+    if (!selectedOrder) return;
 
-   if (!confirmed) {
-     return;
-    }
+    setWorking(true);
 
-   const response = await fetch(
-     "/api/orders/complete",
-     {
-       method: "POST",
-       headers: {
-         "Content-Type": "application/json",
-        },
-       body: JSON.stringify({
-         orderId: selectedOrder.id,
-        }),
+    try {
+      if (confirmType === "delete") {
+        const response = await fetch(
+          "/api/orders/delete",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              orderId: selectedOrder.id,
+            }),
+          }
+        );
+
+        if (!response.ok) {
+          throw new Error();
+        }
+
+        await loadOrders();
+
+        setSuccessTitle("Order Deleted");
+        setSuccessMessage(
+          `${selectedOrder.id} has been deleted.`
+        );
+      } else {
+        const response = await fetch(
+          "/api/orders/complete",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              orderId: selectedOrder.id,
+            }),
+          }
+        );
+
+        if (!response.ok) {
+          throw new Error();
+        }
+
+        await loadOrders();
+
+        setSuccessTitle("Order Completed");
+        setSuccessMessage(
+          `${selectedOrder.id} has been marked as completed.`
+        );
       }
-    );
 
-   if (!response.ok) {
-     alert("Unable to complete order.");
-     return;
+      setConfirmOpen(false);
+      setSuccessOpen(true);
+    } catch {
+      alert("Something went wrong.");
+    } finally {
+      setWorking(false);
     }
-
-   await loadOrders();
-
   }
 
   return (
@@ -218,6 +243,40 @@ export default function OrdersTable() {
           await loadOrders();
           setShowDialog(false);
         }}
+      />
+
+      <ConfirmDialog
+        open={confirmOpen}
+        title={
+          confirmType === "delete"
+            ? "Delete Order"
+            : "Complete Order"
+        }
+        message={
+          confirmType === "delete"
+            ? `Are you sure you want to delete "${selectedOrder?.id}"?\n\nThis cannot be undone.`
+            : `Mark "${selectedOrder?.id}" as completed?`
+        }
+        confirmText={
+          confirmType === "delete"
+            ? "Delete"
+            : "Complete"
+        }
+        confirmColor={
+          confirmType === "delete"
+            ? "red"
+            : "green"
+        }
+        loading={working}
+        onCancel={() => setConfirmOpen(false)}
+        onConfirm={handleConfirm}
+      />
+
+      <SuccessDialog
+        open={successOpen}
+        title={successTitle}
+        message={successMessage}
+        onClose={() => setSuccessOpen(false)}
       />
 
     </div>

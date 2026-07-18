@@ -8,12 +8,17 @@ const SHEET = "Shop Parts Inventory";
 const PART_COLUMN = 1;
 const COLOUR_COLUMN = 2;
 const QUANTITY_COLUMN = 3;
+const MINIMUM_COLUMN = 4;
+const WARNING_COLUMN = 5;
 
 export type InventoryItem = {
   row: number;
   part: string;
   colour: string;
+
   quantity: number;
+  minimum: number;
+  warning: number;
 };
 
 export async function getInventory(): Promise<InventoryItem[]> {
@@ -27,6 +32,8 @@ export async function getInventory(): Promise<InventoryItem[]> {
       part: row[PART_COLUMN - 1] ?? "",
       colour: row[COLOUR_COLUMN - 1] ?? "",
       quantity: Number(row[QUANTITY_COLUMN - 1] ?? 0),
+      minimum: Number(row[MINIMUM_COLUMN - 1] ?? 0),
+      warning: Number(row[WARNING_COLUMN - 1] ?? 0),
     }));
 
 }

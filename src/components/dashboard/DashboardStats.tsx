@@ -1,6 +1,3 @@
-"use client";
-
-import { useEffect, useState } from "react";
 import {
   Package,
   Scissors,
@@ -9,36 +6,15 @@ import {
 } from "lucide-react";
 
 import StatCard from "@/components/ui/StatCard";
+import { DashboardData } from "@/types/dashboard";
 
-type DashboardStats = {
-  outstandingOrders: number;
-  partsToCut: number;
-  inventoryAlerts: number;
-  completedThisWeek: number;
+type Props = {
+  stats: DashboardData;
 };
 
-export default function DashboardStats() {
-  const [stats, setStats] = useState<DashboardStats | null>(null);
-
-  useEffect(() => {
-    async function loadDashboard() {
-      const res = await fetch("/api/dashboard");
-      const data = await res.json();
-
-      setStats(data.stats);
-    }
-
-    loadDashboard();
-  }, []);
-
-  if (!stats) {
-    return (
-      <div className="text-slate-400">
-        Loading dashboard...
-      </div>
-    );
-  }
-
+export default function DashboardStats({
+  stats,
+}: Props) {
   return (
     <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
 

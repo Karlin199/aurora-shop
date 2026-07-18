@@ -1,43 +1,65 @@
 import Panel from "@/components/ui/Panel";
 
-const jobs = [
-  {
-    customer: "Smith",
-    item: "2 Luxe Gliders",
-    due: "Today",
-  },
-  {
-    customer: "Brown",
-    item: "4 Sapphire Chairs",
-    due: "Tomorrow",
-  },
-  {
-    customer: "Johnson",
-    item: "1 Luxe Table",
-    due: "Friday",
-  },
-];
+import { DashboardOrder } from "@/types/dashboard";
 
-export default function ProductionQueue() {
+type Props = {
+  orders: DashboardOrder[];
+};
+
+function formatDueDate(date: string) {
+  const due = new Date(date);
+  const today = new Date();
+
+  due.setHours(0, 0, 0, 0);
+  today.setHours(0, 0, 0, 0);
+
+  const diff =
+    (due.getTime() - today.getTime()) /
+    (1000 * 60 * 60 * 24);
+
+  if (diff === 0) return "Today";
+  if (diff === 1) return "Tomorrow";
+  if (diff < 0) return "Overdue";
+
+  return due.toLocaleDateString();
+}
+
+export default function ProductionQueue({
+  orders,
+}: Props) {
   return (
     <Panel title="Today's Production Queue">
       <div className="space-y-4">
 
-        {jobs.map((job) => (
+        {orders.length === 0 && (
+          <div className="text-slate-400">
+            No active orders.
+          </div>
+        )}
+
+        {orders.slice(0, 10).map((order) => (
           <div
-            key={job.customer}
+            key={order.id}
             className="rounded-xl border border-slate-700 p-4"
           >
             <div className="font-semibold">
-              {job.customer}
+              {order.customer}
             </div>
 
-            <div className="text-slate-300">
-              {job.item}
+            <div className="mt-2 space-y-1">
+              {order.items.map((item, index) => (
+                <div
+                  key={index}
+                  className="text-slate-300"
+                >
+                  {item.qty} × {item.item}
+                  {item.color && ` - ${item.color}`}
+                </div>
+              ))}
             </div>
 
-            <div className="text-sm text-slate-500">
-              Due: {job.due}
+            <div className="mt-3 text-sm text-slate-500">
+              Due: {formatDueDate(order.dueDate)}
             </div>
           </div>
         ))}
