@@ -142,16 +142,15 @@ export async function getSheetId(
         sheet.properties?.title === sheetName
     );
 
-  if (
-    !sheet ||
-    sheet.properties?.sheetId === undefined
-  ) {
-    throw new Error(
-      `Sheet "${sheetName}" not found.`
+  const sheetId = sheet?.properties?.sheetId;
+
+  if (sheetId == null) {
+   throw new Error(
+     `Sheet "${sheetName}" not found.`
     );
   }
 
-  return sheet.properties.sheetId;
+  return sheetId;
 
 }
 
