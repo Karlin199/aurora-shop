@@ -53,10 +53,7 @@ export async function POST(
       quantity
     );
 
-    return NextResponse.json({
-      success: true,
-      ...result,
-    });
+    return NextResponse.json(result);
 
   } catch (error) {
 
