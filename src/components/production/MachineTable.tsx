@@ -2,14 +2,9 @@ import ProductionRow from "./ProductionRow";
 
 type ProductionColour = {
   colour: string;
-
   required: number;
   inStock: number;
   toCut: number;
-
-  cncFile: string;
-  partsPerBoard: number;
-  boardsRequired: number;
 };
 
 type ProductionGroup = {
@@ -26,90 +21,72 @@ export default function MachineTable({
   machine,
   parts,
 }: Props) {
-
-  const showBoards = machine === "CNC";
+  const totalParts = parts.reduce(
+    (sum, part) => sum + part.colours.length,
+    0
+  );
 
   return (
+    <div className="border border-slate-700 bg-slate-950 overflow-hidden">
 
-    <section className="mb-12">
+      {/* Header */}
 
-      {parts.map((partGroup) => (
+      <div className="flex items-center justify-between border-b border-slate-600 bg-slate-900 px-8 py-6">
 
-        <div
-          key={partGroup.part}
-          className="mb-8 rounded-xl border border-slate-700 bg-slate-900/40 overflow-hidden"
-        >
+        <div className="text-3xl font-bold tracking-wide">
+          {machine}
+        </div>
 
-          {/* Part Heading */}
+        <div className="text-xl text-slate-300">
+          {totalParts} Items Remaining
+        </div>
 
-          <h2 className="bg-slate-800 px-6 py-4 text-3xl font-bold uppercase tracking-wide">
+      </div>
 
-            {partGroup.part}
+      {/* Column headings */}
 
-          </h2>
+      <div className="grid grid-cols-12 border-b border-slate-700 px-8 py-5 text-lg font-bold uppercase tracking-wider text-slate-300">
 
-          {/* Column Headings */}
+        <div className="col-span-8">
+          Part / Colour
+        </div>
 
-          <div className="grid grid-cols-12 pb-2 text-sm uppercase tracking-wide text-slate-500">
+        <div className="col-span-4 text-right">
+          Qty
+        </div>
 
-            <div className="col-span-6">
+      </div>
 
-              Colour
+      {/* Production list */}
+
+      {parts.map((part) => (
+        <div key={part.part}>
+
+          {/* Part */}
+
+          <div className="grid grid-cols-12 border-b border-slate-700 bg-slate-900 px-8 py-5">
+
+            <div className="col-span-12 text-3xl font-bold">
+
+              {part.part}
 
             </div>
-
-            <div className="col-span-2 text-right">
-
-              Qty
-
-            </div>
-
-            {showBoards && (
-
-              <>
-                <div className="col-span-2 text-right">
-
-                  Boards
-
-                </div>
-
-                <div className="col-span-2 text-right">
-
-                  File
-
-                </div>
-              </>
-
-            )}
 
           </div>
 
-          {partGroup.colours.map((colour) => (
+          {/* Colours */}
 
+          {part.colours.map((colour) => (
             <ProductionRow
-              key={colour.colour}
+              key={part.part + colour.colour}
               colour={colour.colour}
               quantity={colour.toCut}
-              boards={
-                showBoards
-                  ? colour.boardsRequired
-                  : undefined
-              }
-              cncFile={
-                showBoards
-                  ? colour.cncFile
-                  : undefined
-              }
             />
-
           ))}
 
         </div>
-
       ))}
 
-    </section>
-
+    </div>
   );
-
 }

@@ -1,5 +1,11 @@
 import PayrollPage from "@/components/payroll/PayrollPage";
+import PageHeader from "@/components/layout/PageHeader";
 
 export default function Page() {
-  return <PayrollPage />;
+  return (
+    <>
+      <PageHeader title="Payroll" />
+      <PayrollPage />
+    </>
+  );
 }

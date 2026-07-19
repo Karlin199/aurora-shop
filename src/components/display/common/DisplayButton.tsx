@@ -24,13 +24,13 @@ export default function DisplayButton({
     <button
       onClick={onClick}
       className={`
-        rounded-2xl
-        px-16
-        py-8
-        text-4xl
-        font-bold
-        transition
-        ${colors[variant]}
+       rounded-2xl
+       px-12
+       py-6
+       text-3xl
+       font-bold
+       transition
+       ${colors[variant]}
       `}
     >
       {children}

@@ -84,25 +84,7 @@ export default function ProductionPage() {
   );
 
   return (
-    <div className="min-h-screen bg-slate-950 text-white">
-
-      {/* Header */}
-
-      <div className="flex items-center justify-between border-b border-slate-700 px-8 py-5">
-
-        <div className="text-2xl font-bold tracking-wide">
-
-          Aurora Production
-
-        </div>
-
-        <div className="text-2xl font-semibold text-slate-300">
-
-          {time}
-
-        </div>
-
-      </div>
+    <div className="text-white">
 
       {/* Production */}
 

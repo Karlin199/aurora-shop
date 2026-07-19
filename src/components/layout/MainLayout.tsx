@@ -16,7 +16,7 @@ export default function MainLayout({
       <div className="flex flex-1 flex-col overflow-hidden">
         <Header />
 
-        <main className="flex-1 overflow-auto p-8 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-700">
+        <main className="flex-1 overflow-auto bg-slate-950 p-8">
           {children}
         </main>
       </div>

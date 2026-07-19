@@ -4,6 +4,7 @@ import { ReactNode, useEffect, useState } from "react";
 import { Settings, Wifi } from "lucide-react";
 
 import DisplaySettings from "./DisplaySettings";
+import DisplayViewport from "./DisplayViewport";
 
 type Props = {
   title: string;
@@ -37,56 +38,57 @@ export default function DisplayLayout({
 
   return (
     <>
-      <div className="flex min-h-screen flex-col bg-slate-950 text-white">
+      <DisplayViewport>
+        <div className="flex h-full flex-col bg-slate-950 text-white">
 
-        {/* Header */}
+         {/* Header */}
 
-        <header className="border-b border-slate-800 bg-slate-950">
+         <header className="border-b border-slate-800 bg-slate-950">
 
-          <div className="flex items-center justify-between px-10 py-6">
+            <div className="flex items-center justify-between px-10 py-6">
 
-            <div>
+              <div>
 
-              <div className="text-sm uppercase tracking-[0.35em] text-slate-400">
-                Aurora Outdoor Furniture
+                <div className="text-sm uppercase tracking-[0.35em] text-slate-400">
+                 Aurora Outdoor Furniture
+                </div>
+
+                <h1 className="mt-2 text-4xl font-black">
+                 {title}
+                </h1>
+
               </div>
 
-              <h1 className="mt-2 text-4xl font-black">
-                {title}
-              </h1>
+              <div className="flex items-center gap-8">
+
+                <div className="flex items-center gap-3 text-xl text-green-400">
+
+                  <Wifi className="h-5 w-5" />
+
+                  Connected
+
+                </div>
+
+                <div className="text-2xl font-semibold">
+                  {time}
+                </div>
+
+                <button
+                 onClick={() => setSettingsOpen(true)}
+                 className="rounded-xl p-3 transition hover:bg-slate-800"
+                >
+                 <Settings className="h-7 w-7" />
+                </button>
+
+              </div>
 
             </div>
 
-            <div className="flex items-center gap-8">
-
-              <div className="flex items-center gap-3 text-xl text-green-400">
-
-                <Wifi className="h-5 w-5" />
-
-                Connected
-
-              </div>
-
-              <div className="text-2xl font-semibold">
-                {time}
-              </div>
-
-              <button
-                onClick={() => setSettingsOpen(true)}
-                className="rounded-xl p-3 transition hover:bg-slate-800"
-              >
-                <Settings className="h-7 w-7" />
-              </button>
-
-            </div>
-
-          </div>
-
-        </header>
+          </header>
 
         {/* Main */}
 
-        <main className="flex-1 px-10 py-8">
+        <main className="flex-1 overflow-hidden px-10 py-8">
 
           {children}
 
@@ -102,7 +104,8 @@ export default function DisplayLayout({
           </div>
         )}
 
-      </div>
+          </div>
+      </DisplayViewport>
 
       <DisplaySettings
         open={settingsOpen}

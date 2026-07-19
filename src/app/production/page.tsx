@@ -1,5 +1,11 @@
 import ProductionPage from "@/components/production/ProductionPage";
+import PageHeader from "@/components/layout/PageHeader";
 
 export default function Page() {
-  return <ProductionPage />;
+  return (
+    <>
+      <PageHeader title="Production" />
+      <ProductionPage />
+    </>
+  );
 }

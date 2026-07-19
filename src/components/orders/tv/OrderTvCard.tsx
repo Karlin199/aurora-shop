@@ -38,11 +38,7 @@ export default function OrderTvCard({
 
         {settings.showCustomer && (
           <div className="border-b border-slate-800 p-10">
-            <div className="text-xl uppercase tracking-[0.3em] text-slate-400">
-             Customer
-            </div>
-
-            <div className="mt-4 text-7xl font-black">
+            <div className="mt-4 text-6xl font-black">
              {order.customer}
             </div>
           </div>
@@ -93,7 +89,7 @@ export default function OrderTvCard({
                   {item.item}
                 </td>
 
-                <td className="py-6 text-3xl text-slate-300">
+                <td className="py-6 text-4xl text-slate-300">
                   {item.color}
                 </td>
 
@@ -114,7 +110,7 @@ export default function OrderTvCard({
         <div>
 
           {settings.showDueDate && (
-            <div className="text-3xl">
+            <div className="text-2xl">
               <span className="font-semibold text-slate-400">
                 Due:
               </span>{" "}
@@ -123,7 +119,7 @@ export default function OrderTvCard({
           )}
 
           {settings.showStatus && (
-            <div className="mt-3 text-3xl">
+            <div className="mt-3 text-2xl">
               <span className="font-semibold text-slate-400">
                 Status:
               </span>{" "}
