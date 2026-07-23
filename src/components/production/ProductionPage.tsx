@@ -70,13 +70,27 @@ export default function ProductionPage() {
 
       {/* Production */}
 
-      <div className="px-8 py-6">
+      <div className="px-8 pt-6 pb-4">
         
-        <MachineTabs
-         machines={machines.map((m) => m.machine)}
-         selected={selectedMachine}
-         onSelect={setSelectedMachine}
-        />
+        <div className="mb-6 flex items-center justify-between">
+          <MachineTabs
+           machines={machines.map((m) => m.machine)}
+           selected={selectedMachine}
+           onSelect={setSelectedMachine}
+          />
+
+          {currentMachine && (
+            <div className="text-right">
+              <div className="text-2xl font-bold uppercase">
+               {currentMachine.machine}
+              </div>
+
+              <div className="text-lg text-gray-400">
+               {currentMachine.parts.length} Parts Waiting
+              </div>
+            </div>
+          )}
+        </div>
 
         {machines.length === 0 ? (
 

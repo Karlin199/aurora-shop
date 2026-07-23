@@ -11,17 +11,6 @@ export default function ProductionQueue({
 }: Props) {
   return (
     <div className="space-y-8">
-      {/* Header */}
-
-      <div className="border-b border-gray-600 pb-4">
-        <h2 className="text-5xl font-bold uppercase">
-          {machine}
-        </h2>
-
-        <p className="mt-2 text-2xl text-gray-400">
-          {parts.length} Parts Waiting
-        </p>
-      </div>
 
       {/* Queue */}
 
@@ -29,43 +18,53 @@ export default function ProductionQueue({
         {parts.map((part) => (
           <div
             key={part.part}
-            className="rounded-xl border border-gray-700 bg-[#1d2433] p-6"
+            className="rounded-xl border border-gray-700 bg-[#1d2433] p-8"
           >
             {/* Part Name */}
 
-            <h3 className="text-4xl font-bold">
+            <h3 className="text-4xl font-extrabold leading-tight">
               {part.part}
             </h3>
 
             {/* Total */}
 
-            <p className="mt-2 text-xl text-blue-400">
+            <p className="mt-2 text-xl uppercase tracking-wider text-gray-500">
               {part.totalToCut} TO CUT
             </p>
 
-            {/* Colours */}
+            {/* Colour List */}
 
-            <div className="mt-6 space-y-3">
-              {part.colours.map((colour, index) => (
+            <div className="mt-8 rounded-lg bg-[#151c28] px-6 py-5">
+
+              <div className="space-y-4">
+
+               {part.colours.map((colour, index) => (
+
                 <div
-                  key={`${part.part}-${colour.colour}-${index}`}
-                  className="flex justify-between text-3xl"
+                 key={`${part.part}-${colour.colour}-${index}`}
+                 className="flex items-center justify-between border-b border-gray-700 pb-3 last:border-b-0 last:pb-0"
                 >
-                  <span>
-                    {colour.colour}
+
+                  <span className="text-4xl font-bold tracking-wide">
+                   {colour.colour}
+                   </span>
+
+                   <span className="text-5xl font-black">
+                   {colour.toCut}
                   </span>
 
-                  <span className="font-bold">
-                    {colour.toCut}
-                  </span>
                 </div>
+
               ))}
+
             </div>
+
+          </div>
 
             {/* Button */}
 
             <div className="mt-8 flex justify-end">
-              <button className="rounded-lg bg-green-600 px-5 py-3 text-xl font-semibold hover:bg-green-700">
+              <button className="rounded-lg bg-green-600 px-4 py-2 text-lg font-semibold hover:bg-green-700">
                 Run Complete
               </button>
             </div>
