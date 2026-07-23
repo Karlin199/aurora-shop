@@ -1,31 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import MachineTable from "./MachineTable";
+
 import MachineTabs from "./MachineTabs";
 import ProductionQueue from "./ProductionQueue";
-
-type ProductionColour = {
-  colour: string;
-
-  required: number;
-  inStock: number;
-  toCut: number;
-
-  cncFile: string;
-  partsPerBoard: number;
-  boardsRequired: number;
-};
-
-type ProductionGroup = {
-  part: string;
-  colours: ProductionColour[];
-};
-
-type ProductionMachine = {
-  machine: string;
-  parts: ProductionGroup[];
-};
+import type {
+  ProductionMachine,
+} from "@/services/production";
 
 export default function ProductionPage() {
   const [machines, setMachines] =
