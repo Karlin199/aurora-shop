@@ -6,6 +6,7 @@ export type Part = {
   cncFile: string;
   partsPerBoard: number;
   oneDriveLink: string;
+  fixedColor: string;
 };
 
 const SHEET = "Parts";
@@ -23,6 +24,7 @@ export async function getParts(): Promise<Part[]> {
    cncFile: String(row[2] ?? "").trim(),
    partsPerBoard: Number(row[3] ?? 0),
    oneDriveLink: String(row[4] ?? "").trim(),
+   fixedColor: String(row[5] ?? "").trim(),
   }));
 }
 

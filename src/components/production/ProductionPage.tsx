@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import MachineTable from "./MachineTable";
 import MachineTabs from "./MachineTabs";
+import ProductionQueue from "./ProductionQueue";
 
 type ProductionColour = {
   colour: string;
@@ -108,7 +109,7 @@ export default function ProductionPage() {
 
           currentMachine && (
 
-           <MachineTable
+           <ProductionQueue
              machine={currentMachine.machine}
              parts={currentMachine.parts}
             />

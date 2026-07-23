@@ -225,17 +225,37 @@ export default function OrderDialog({
   return (
 
     <Modal
-
-      open={open}
-
-      onClose={onClose}
-
-      title={
-        mode === "new"
-          ? "New Customer Order"
-          : "Edit Customer Order"
+     open={open}
+     onClose={onClose}
+     title={
+       mode === "new"
+         ? "New Customer Order"
+         : "Edit Customer Order"
       }
+      footer={
+        <div className="flex justify-end gap-3">
 
+          <Button
+           variant="secondary"
+           onClick={onClose}
+           disabled={saving}
+          >
+           Cancel
+          </Button>
+
+          <Button
+           onClick={saveOrder}
+           disabled={saving}
+          >
+            {saving
+             ? "Saving..."
+             : mode === "new"
+               ? "Save Order"
+               : "Save Changes"}
+          </Button>
+
+        </div>
+      }
     >
 
       <div className="space-y-6">
@@ -332,29 +352,6 @@ export default function OrderDialog({
 
             ))}
           </div>
-
-        </div>
-
-        <div className="flex justify-end gap-3">
-
-          <Button
-            variant="secondary"
-            onClick={onClose}
-            disabled={saving}
-          >
-            Cancel
-          </Button>
-
-          <Button
-            onClick={saveOrder}
-            disabled={saving}
-          >
-            {saving
-              ? "Saving..."
-              : mode === "new"
-                ? "Save Order"
-                : "Save Changes"}
-          </Button>
 
         </div>
 

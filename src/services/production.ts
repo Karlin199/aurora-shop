@@ -29,6 +29,9 @@ export type ProductionColour = {
 
 export type ProductionGroup = {
   part: string;
+  totalToCut: number;
+  totalBoards: number;
+  cncFile: string;
   colours: ProductionColour[];
 };
 
@@ -101,24 +104,31 @@ export async function getProduction(): Promise<ProductionMachine[]> {
 
       for (const bomItem of bomItems) {
 
-        const key = `${bomItem.part}|${item.color}`;
+        const partInfo = parts.find(
+         (p) => p.name === bomItem.part
+        );
+
+        const colour =
+         partInfo?.fixedColor || item.color;
+
+        const key = `${bomItem.part}|${colour}`;
 
         const existing = requirements.get(key);
 
         const qtyRequired =
-          bomItem.qtyPerUnit *
-          Number(item.qty);
+         bomItem.qtyPerUnit *
+         Number(item.qty);
 
         if (existing) {
 
-          existing.required += qtyRequired;
+         existing.required += qtyRequired;
 
         } else {
 
-          requirements.set(key, {
-            part: bomItem.part,
-            color: item.color,
-            required: qtyRequired,
+         requirements.set(key, {
+           part: bomItem.part,
+           color: colour,
+           required: qtyRequired,
           });
 
         }
@@ -245,23 +255,30 @@ export async function getProduction(): Promise<ProductionMachine[]> {
 
      machine,
 
-     parts: [...parts.entries()].map(
+     parts: [...parts.entries()]
+       .map(([part, colours]) => {
 
-       ([part, colours]) => ({
+         const totalToCut = colours.reduce(
+           (sum, colour) => sum + colour.toCut,
+           0
+          );
 
-         part,
+         const totalBoards = colours.reduce(
+           (sum, colour) => sum + colour.boardsRequired,
+           0
+          );
 
-         colours: colours.sort(
-
-           (a, b) =>
-
-             b.toCut - a.toCut
-
-          ),
-
+         return {
+           part,
+           totalToCut,
+           totalBoards,
+           cncFile: colours[0]?.cncFile ?? "",
+           colours: colours.sort(
+             (a, b) => b.toCut - a.toCut
+            ),
+          };
         })
-
-      ),
+       .sort((a, b) => b.totalToCut - a.totalToCut),
 
     });
 
