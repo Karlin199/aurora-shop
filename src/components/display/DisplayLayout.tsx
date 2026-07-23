@@ -69,7 +69,7 @@ export default function DisplayLayout({
 
                 </div>
 
-                <div className="text-2xl font-semibold">
+                <div className="text-6xl font-bold tracking-tight text-white">
                   {time}
                 </div>
 

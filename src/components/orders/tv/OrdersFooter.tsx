@@ -8,11 +8,15 @@ import { useDisplaySettings } from "@/components/display/DisplayContext";
 type Props = {
   currentIndex: number;
   totalOrders: number;
+  onPrevious: () => void;
+  onNext: () => void;
 };
 
 export default function OrdersFooter({
   currentIndex,
   totalOrders,
+  onPrevious,
+  onNext,
 }: Props) {
   const { settings } = useDisplaySettings();
 
@@ -42,10 +46,13 @@ export default function OrdersFooter({
 
         {/* Previous */}
 
-        <div className="flex items-center gap-3 text-3xl text-slate-300">
-          <ChevronLeft className="h-8 w-8" />
-          Previous
-        </div>
+        <button
+         onClick={onPrevious}
+         className="flex items-center gap-3 rounded-xl px-4 py-2 text-3xl text-slate-300 transition hover:bg-slate-800"
+        >
+         <ChevronLeft className="h-8 w-8" />
+         Previous
+        </button>
 
         {/* Current */}
 
@@ -57,10 +64,13 @@ export default function OrdersFooter({
 
         {/* Next */}
 
-        <div className="flex items-center gap-3 text-3xl text-slate-300">
-          Next
-          <ChevronRight className="h-8 w-8" />
-        </div>
+        <button
+         onClick={onNext}
+         className="flex items-center gap-3 rounded-xl px-4 py-2 text-3xl text-slate-300 transition hover:bg-slate-800"
+        >
+         <ChevronRight className="h-8 w-8" />
+         Next
+        </button>
 
       </div>
 

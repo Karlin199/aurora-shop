@@ -75,6 +75,30 @@ export default function OrdersTvPage() {
   }, [settings.refresh]);
 
   //
+  // Auto advance
+  //
+
+  useEffect(() => {
+    if (!settings.autoAdvance) return;
+
+    if (orders.length === 0) return;
+
+    const timer = setInterval(() => {
+      setCurrentIndex((current) => {
+        const lastPage = orders.length; // overview + all orders
+
+        return current >= lastPage ? 0 : current + 1;
+      });
+    }, settings.refresh * 1000);
+
+    return () => clearInterval(timer);
+  }, [
+    settings.autoAdvance,
+    settings.refresh,
+    orders.length,
+  ]);
+ 
+  //
   // Restore last viewed page
   //
 
@@ -120,13 +144,13 @@ export default function OrdersTvPage() {
       switch (e.key) {
         case "ArrowRight":
           setCurrentIndex((current) =>
-            Math.min(current + 1, orders.length)
+            current >= orders.length ? 0 : current + 1
           );
           break;
 
         case "ArrowLeft":
           setCurrentIndex((current) =>
-            Math.max(current - 1, 0)
+            current <= 0 ? orders.length : current - 1
           );
           break;
 
@@ -183,16 +207,30 @@ export default function OrdersTvPage() {
     }, 1500);
   }
 
+  function goPrevious() {
+    setCurrentIndex((current) =>
+      current <= 0 ? orders.length : current - 1
+    );
+  }
+
+  function goNext() {
+    setCurrentIndex((current) =>
+      current >= orders.length ? 0 : current + 1
+    );
+  }
+
   return (
     <>
       <DisplayLayout
         title="Orders Display"
         footer={
-          <OrdersFooter
-            currentIndex={currentIndex}
-            totalOrders={orders.length}
-          />
-        }
+        <OrdersFooter
+         currentIndex={currentIndex}
+         totalOrders={orders.length}
+         onPrevious={goPrevious}
+         onNext={goNext}
+        />
+      }
       >
 
         <DisplayCarousel index={currentIndex}>

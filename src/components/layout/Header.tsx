@@ -11,9 +11,6 @@ export default function Header() {
 
       setCurrentTime(
         now.toLocaleString("en-CA", {
-          weekday: "long",
-          month: "long",
-          day: "numeric",
           hour: "numeric",
           minute: "2-digit",
         })
@@ -41,12 +38,8 @@ export default function Header() {
       </div>
 
       <div className="text-right">
-        <div className="text-sm text-slate-400">
-          {currentTime}
-        </div>
-
-        <div className="text-xs text-slate-500">
-          System Online
+        <div className="text-6xl font-bold leading-none text-white">
+         {currentTime}
         </div>
       </div>
 
