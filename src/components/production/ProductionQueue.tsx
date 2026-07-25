@@ -1,4 +1,8 @@
+"use client";
+
+import { useState } from "react";
 import type { ProductionGroup } from "@/services/production";
+import RunCompleteDialog from "./RunCompleteDialog";
 
 type Props = {
   machine: string;
@@ -9,7 +13,25 @@ export default function ProductionQueue({
   machine,
   parts,
 }: Props) {
+
+    const [selectedPart, setSelectedPart] =
+     useState<ProductionGroup | null>(null);
+
+    const [dialogOpen, setDialogOpen] =
+     useState(false);
+
+    function openDialog(part: ProductionGroup) {
+     setSelectedPart(part);
+     setDialogOpen(true);
+    }
+
+    function closeDialog() {
+     setDialogOpen(false);
+     setSelectedPart(null);
+    }
+
   return (
+
     <div className="space-y-8">
 
       {/* Queue */}
@@ -64,13 +86,24 @@ export default function ProductionQueue({
             {/* Button */}
 
             <div className="mt-8 flex justify-end">
-              <button className="rounded-lg bg-green-600 px-4 py-2 text-lg font-semibold hover:bg-green-700">
-                Run Complete
+              <button
+               onClick={() => openDialog(part)}
+               className="rounded-lg bg-green-600 px-4 py-2 text-lg font-semibold hover:bg-green-700"
+              >
+               Run Complete
               </button>
             </div>
           </div>
         ))}
       </div>
+
+      <RunCompleteDialog
+       open={dialogOpen}
+       part={selectedPart}
+       onClose={closeDialog}
+       onCompleted={() => window.location.reload()}
+      />
+
     </div>
   );
 }
