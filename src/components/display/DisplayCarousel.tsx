@@ -1,35 +1,47 @@
 "use client";
 
-import { ReactNode } from "react";
+import { Children, ReactNode } from "react";
 
 type Props = {
   index: number;
-  children: ReactNode[];
+  children: ReactNode;
 };
 
 export default function DisplayCarousel({
   index,
   children,
 }: Props) {
-  return (
-    <div className="overflow-hidden">
+  const slides = Children.toArray(children);
+  const totalSlides = slides.length;
 
+  if (totalSlides === 0) {
+    return null;
+  }
+
+  const slideWidth = 100 / totalSlides;
+  const translateAmount = index * slideWidth;
+
+  return (
+    <div className="h-full w-full overflow-hidden">
       <div
-        className="flex transition-transform duration-500 ease-in-out"
+        className="flex h-full transition-transform duration-500 ease-in-out"
         style={{
-          transform: `translateX(-${index * 100}%)`,
+          width: `${totalSlides * 100}%`,
+          transform: `translateX(-${translateAmount}%)`,
         }}
       >
-        {children.map((child, i) => (
+        {slides.map((child, i) => (
           <div
             key={i}
-            className="min-h-[calc(100vh-220px)] w-full flex-shrink-0"
+            className="min-h-[calc(100vh-220px)] flex-shrink-0"
+            style={{
+              width: `${slideWidth}%`,
+            }}
           >
             {child}
           </div>
         ))}
       </div>
-
     </div>
   );
 }

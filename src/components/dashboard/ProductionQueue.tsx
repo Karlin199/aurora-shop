@@ -40,25 +40,37 @@ export default function ProductionQueue({
         {orders.slice(0, 10).map((order) => (
           <div
             key={order.id}
-            className="rounded-xl border border-slate-700 p-4"
+            className="rounded-xl border border-slate-700 p-5"
           >
-            <div className="font-semibold">
+            {/* Customer Name */}
+            <div className="text-xl font-semibold">
               {order.customer}
             </div>
 
-            <div className="mt-2 space-y-1">
+            {/* Order Items */}
+            <div className="mt-3 grid grid-cols-2 gap-x-8 gap-y-2">
               {order.items.map((item, index) => (
                 <div
                   key={index}
-                  className="text-slate-300"
+                  className="text-lg text-slate-300"
                 >
-                  {item.qty} × {item.item}
-                  {item.color && ` - ${item.color}`}
+                  <span className="font-semibold text-white">
+                    {item.qty} ×
+                  </span>{" "}
+                  {item.item}
+
+                  {item.color && (
+                    <span className="text-slate-400">
+                      {" - "}
+                      {item.color}
+                    </span>
+                  )}
                 </div>
               ))}
             </div>
 
-            <div className="mt-3 text-sm text-slate-500">
+            {/* Due Date */}
+            <div className="mt-4 text-sm text-slate-500">
               Due: {formatDueDate(order.dueDate)}
             </div>
           </div>
