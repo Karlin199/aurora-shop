@@ -1,17 +1,17 @@
 import { NextResponse } from "next/server";
-import { getCNCParts } from "@/services/parts";
+import { getCNCFiles } from "@/services/parts";
 
 export async function GET() {
   try {
-    const parts = await getCNCParts();
+    const files = await getCNCFiles();
 
     return NextResponse.json(
-      parts.map((part, index) => ({
+      files.map((file, index) => ({
         id: String(index + 1),
-        part: part.name,
-        file: part.cncFile,
+        part: file.partName,
+        file: file.fileName,
         modified: "",
-        downloadUrl: part.oneDriveLink,
+        downloadUrl: "",
       }))
     );
   } catch (error) {

@@ -2,16 +2,19 @@
 
 import { useState } from "react";
 import type { ProductionGroup } from "@/services/production";
+import type { CncProductionRecommendation } from "@/lib/domain/cncCalculations";
 import RunCompleteDialog from "./RunCompleteDialog";
 
 type Props = {
   machine: string;
   parts: ProductionGroup[];
+  cncRuns: CncProductionRecommendation[];
 };
 
 export default function ProductionQueue({
   machine,
   parts,
+  cncRuns,
 }: Props) {
 
     const [selectedPart, setSelectedPart] =
@@ -36,8 +39,32 @@ export default function ProductionQueue({
 
       {/* Queue */}
 
+      {cncRuns.length > 0 && (
+        <div className="space-y-6">
+          {cncRuns.map((run) => (
+            <div key={run.fileName} className="rounded-xl border border-blue-700 bg-blue-950/30 p-6">
+              <h3 className="text-3xl font-extrabold">CNC Run: {run.fileName}</h3>
+              <p className="mt-2 text-xl text-gray-300">
+                {run.completeRunsRequired} complete run{run.completeRunsRequired === 1 ? "" : "s"} · {run.totalBoardsPerRun} boards per run · {run.customerColorBoardsPerRun} customer-color · {run.fixedColorBoardsPerRun} black
+              </p>
+              {run.validationErrors.map((error) => (
+                <p key={error} className="mt-3 font-semibold text-amber-300">{error}</p>
+              ))}
+              <div className="mt-5 grid gap-3 md:grid-cols-2">
+                {run.outputs.map((output) => (
+                  <div key={`${output.partName}-${output.color}`} className="rounded-lg bg-[#151c28] px-4 py-3">
+                    <div className="font-bold">{output.partName} · {output.color}</div>
+                    <div className="text-lg">{output.expectedOutput} expected / {output.expectedSurplus} surplus</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
       <div className="grid grid-cols-2 gap-6">
-        {parts.map((part) => (
+        {parts.filter((part) => !part.cncFile).map((part) => (
           <div
             key={part.part}
             className="rounded-xl border border-gray-700 bg-[#1d2433] p-8"

@@ -1,30 +1,22 @@
-import { getOrders } from "./orders";
+import { calculateProductionPlan, type Requirement } from "@/lib/domain/productionCalculations";
+import type { CncProductionRecommendation } from "@/lib/domain/cncCalculations";
 import { getBom } from "./bom";
 import { getInventory } from "./inventory";
-import { getParts } from "./parts";
-
-export type ProductionPart = {
-  part: string;
-
-  required: number;
-  inStock: number;
-  toCut: number;
-
-  cncFile: string;
-  partsPerBoard: number;
-  boardsRequired: number;
-};
+import { getOrders } from "./orders";
+import { getCNCFiles, getParts } from "./parts";
 
 export type ProductionColour = {
   colour: string;
-
   required: number;
   inStock: number;
   toCut: number;
-
   cncFile: string;
   partsPerBoard: number;
   boardsRequired: number;
+  partsPerFullRun: number;
+  fullRunsNeeded: number;
+  expectedOutput: number;
+  expectedSurplus: number;
 };
 
 export type ProductionGroup = {
@@ -38,260 +30,74 @@ export type ProductionGroup = {
 export type ProductionMachine = {
   machine: string;
   parts: ProductionGroup[];
+  cncRuns: CncProductionRecommendation[];
 };
 
-type ProductionRow = {
-  part: string;
-  color: string;
-
-  required: number;
-  inStock: number;
-  toCut: number;
-
-  primaryMachine: string;
-  cncFile: string;
-  partsPerBoard: number;
-  boardsRequired: number;
-};
+function toProductionColour(requirement: Requirement): ProductionColour {
+  const cnc = requirement.cnc;
+  return {
+    colour: requirement.color,
+    required: requirement.required,
+    inStock: requirement.inStock,
+    toCut: requirement.shortage,
+    cncFile: requirement.cncFile ?? "",
+    partsPerBoard: cnc?.qtyPerBoard ?? 0,
+    boardsRequired: cnc?.boardsToRun ?? 0,
+    partsPerFullRun: cnc?.partsPerFullRun ?? 0,
+    fullRunsNeeded: cnc?.fullRunsNeeded ?? 0,
+    expectedOutput: cnc?.expectedOutput ?? 0,
+    expectedSurplus: cnc?.expectedSurplus ?? 0,
+  };
+}
 
 export async function getProduction(): Promise<ProductionMachine[]> {
+  const [orders, bom, inventory, parts, cncFiles] = await Promise.all([
+    getOrders(),
+    getBom(),
+    getInventory(),
+    getParts(),
+    getCNCFiles(),
+  ]);
 
-  const orders = await getOrders();
-  const bom = await getBom();
-  const inventory = await getInventory();
-  const parts = await getParts();
-  const bomLookup = new Map<string, typeof bom>();
-
-  for (const item of bom) {
-
-    const existing =
-      bomLookup.get(item.product);
-
-    if (existing) {
-
-      existing.push(item);
-
-    } else {
-
-      bomLookup.set(
-        item.product,
-        [item]
-      );
-
-    }
-
-  }
-
-  const requirements = new Map<
-    string,
-    {
-      part: string;
-      color: string;
-      required: number;
-    }
-  >();
-
-  //
-  // Calculate total required parts
-  //
-
-  for (const order of orders) {
-
-    for (const item of order.items) {
-
-      const bomItems =
-        bomLookup.get(item.item) ?? [];
-
-      for (const bomItem of bomItems) {
-
-        const partInfo = parts.find(
-         (p) => p.name === bomItem.part
-        );
-
-        const colour =
-         partInfo?.fixedColor || item.color;
-
-        const key = `${bomItem.part}|${colour}`;
-
-        const existing = requirements.get(key);
-
-        const qtyRequired =
-         bomItem.qtyPerUnit *
-         Number(item.qty);
-
-        if (existing) {
-
-         existing.required += qtyRequired;
-
-        } else {
-
-         requirements.set(key, {
-           part: bomItem.part,
-           color: colour,
-           required: qtyRequired,
-          });
-
-        }
-
-      }
-
-    }
-
-  }
-
-  //
-  // Compare against inventory
-  //
-
-  const production: ProductionRow[] = [];
-
-  for (const requirement of requirements.values()) {
-
-    const stock = inventory.find(
-     (i) =>
-       i.part === requirement.part &&
-       i.colour === requirement.color
-    );
-
-    const inStock = stock?.quantity ?? 0;
-
-    const toCut =
-      Math.max(
-        requirement.required - inStock,
-        0
-      );
-
-    if (toCut > 0) {
-
-     const partInfo =
-      parts.find(
-       (p) => p.name === requirement.part
-      );
-
-     const partsPerBoard =
-       partInfo?.partsPerBoard ?? 0;
-
-     const boardsRequired =
-       partsPerBoard > 0
-         ? Math.ceil(toCut / partsPerBoard)
-         : 0;
-
-     production.push({
-       part: requirement.part,
-       color: requirement.color,
-
-       required: requirement.required,
-       inStock,
-       toCut,
-
-       primaryMachine:
-         partInfo?.primaryMachine ?? "",
-
-       cncFile:
-         partInfo?.cncFile ?? "",
-
-       partsPerBoard,
-
-       boardsRequired,
-     });
-
-    }
-
-  }
-
-  production.sort(
-    (a, b) => b.toCut - a.toCut
+  const plan = calculateProductionPlan(
+    orders.map((order) => ({
+      status: order.status as "Waiting" | "Completed",
+      items: order.items.map((item) => ({
+        item: item.item,
+        color: item.color,
+        qty: Number(item.qty),
+      })),
+    })),
+    bom,
+    inventory,
+    parts,
+    cncFiles,
   );
+  const requirements = plan.requirements;
 
-  const grouped = new Map<
-   string,
-   Map<string, ProductionColour[]>
-  >();
-
-  for (const item of production) {
-
-    if (!grouped.has(item.primaryMachine)) {
-
-     grouped.set(
-       item.primaryMachine,
-       new Map()
-      );
-
-    }
-
-    const machine =
-     grouped.get(item.primaryMachine)!;
-
-    if (!machine.has(item.part)) {
-
-     machine.set(
-       item.part,
-       []
-      );
-
-    }
-
-    machine.get(item.part)!.push({
-
-     colour: item.color,
-
-     required: item.required,
-     inStock: item.inStock,
-     toCut: item.toCut,
-
-     cncFile: item.cncFile,
-     partsPerBoard: item.partsPerBoard,
-     boardsRequired: item.boardsRequired,
-
-    });
-
+  const grouped = new Map<string, Map<string, ProductionColour[]>>();
+  for (const requirement of requirements) {
+    if (requirement.shortage === 0) continue;
+    const partGroups = grouped.get(requirement.machine) ?? new Map<string, ProductionColour[]>();
+    const colours = partGroups.get(requirement.part) ?? [];
+    colours.push(toProductionColour(requirement));
+    partGroups.set(requirement.part, colours);
+    grouped.set(requirement.machine, partGroups);
   }
 
-  const result: ProductionMachine[] = [];
-
-  for (const [machine, parts] of grouped) {
-
-   result.push({
-
-     machine,
-
-     parts: [...parts.entries()]
-       .map(([part, colours]) => {
-
-         const totalToCut = colours.reduce(
-           (sum, colour) => sum + colour.toCut,
-           0
-          );
-
-         const totalBoards = colours.reduce(
-           (sum, colour) => sum + colour.boardsRequired,
-           0
-          );
-
-         return {
-           part,
-           totalToCut,
-           totalBoards,
-           cncFile: colours[0]?.cncFile ?? "",
-           colours: colours.sort(
-             (a, b) => b.toCut - a.toCut
-            ),
-          };
-        })
-       .sort((a, b) => b.totalToCut - a.totalToCut),
-
-    });
-
-  }
-
-  result.sort(
-
-   (a, b) =>
-
-     a.machine.localeCompare(b.machine)
-
-  );
-
- return result;
-
+  return [...grouped.entries()]
+    .map(([machine, partGroups]) => ({
+      machine,
+      cncRuns: machine === "CNC" ? plan.cncRuns : [],
+      parts: [...partGroups.entries()]
+        .map(([part, colours]) => ({
+          part,
+          totalToCut: colours.reduce((sum, colour) => sum + colour.toCut, 0),
+          totalBoards: colours.reduce((sum, colour) => sum + colour.boardsRequired, 0),
+          cncFile: colours[0]?.cncFile ?? "",
+          colours: colours.sort((a, b) => b.toCut - a.toCut),
+        }))
+        .sort((a, b) => b.totalToCut - a.totalToCut),
+    }))
+    .sort((a, b) => a.machine.localeCompare(b.machine));
 }

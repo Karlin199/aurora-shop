@@ -3,6 +3,10 @@ import {
   getSheetValues,
   replaceSheetValues,
 } from "@/lib/googleSheets";
+import { canonicalColour } from "@/lib/domain/normalization";
+import { requiredText } from "@/lib/domain/sheetParsing";
+import { isProductionActiveOrderRow } from "@/lib/domain/orderParsing";
+export { ORDER_STATUSES, type OrderStatus } from "@/lib/domain/orderParsing";
 
 export type OrderItem = {
   item: string;
@@ -56,18 +60,15 @@ export async function getOrders(): Promise<Order[]> {
 
   for (const row of rows.slice(1)) {
 
-    const id = row[0] ?? "";
-    const customer = row[1] ?? "";
-    const item = row[2] ?? "";
-    const color = row[3] ?? "";
+    const sheetRow = rows.indexOf(row) + 1;
+    if (!isProductionActiveOrderRow(row, sheetRow)) continue;
+    const status = "Waiting";
+    const id = requiredText("Orders", sheetRow, "Order ID", row[0]);
+    const customer = requiredText("Orders", sheetRow, "Customer", row[1]);
+    const item = requiredText("Orders", sheetRow, "Item", row[2]);
+    const color = canonicalColour(requiredText("Orders", sheetRow, "Color", row[3]));
     const qty = row[4] ?? "";
     const dueDate = row[5] ?? "";
-    const status = row[6] ?? "";
-
-    if (status === "Completed") {
-      continue;
-    }
-
     if (!grouped.has(id)) {
 
       grouped.set(id, {

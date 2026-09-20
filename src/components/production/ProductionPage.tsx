@@ -107,6 +107,7 @@ export default function ProductionPage() {
            <ProductionQueue
              machine={currentMachine.machine}
              parts={currentMachine.parts}
+             cncRuns={currentMachine.cncRuns}
             />
 
           )

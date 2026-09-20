@@ -2,6 +2,8 @@ import {
   getSheetValues,
   updateCell,
 } from "@/lib/googleSheets";
+import { canonicalColour, canonicalPartName } from "@/lib/domain/normalization";
+import { nonNegativeNumber, requiredText } from "@/lib/domain/sheetParsing";
 
 const SHEET = "Shop Parts Inventory";
 
@@ -29,11 +31,11 @@ export async function getInventory(): Promise<InventoryItem[]> {
     .slice(1)
     .map((row, index) => ({
       row: index + 2,
-      part: row[PART_COLUMN - 1] ?? "",
-      colour: row[COLOUR_COLUMN - 1] ?? "",
-      quantity: Number(row[QUANTITY_COLUMN - 1] ?? 0),
-      minimum: Number(row[MINIMUM_COLUMN - 1] ?? 0),
-      warning: Number(row[WARNING_COLUMN - 1] ?? 0),
+      part: canonicalPartName(requiredText(SHEET, index + 2, "Part Name", row[PART_COLUMN - 1])),
+      colour: canonicalColour(requiredText(SHEET, index + 2, "Color", row[COLOUR_COLUMN - 1])),
+      quantity: nonNegativeNumber(SHEET, index + 2, "In Stock", row[QUANTITY_COLUMN - 1]),
+      minimum: nonNegativeNumber(SHEET, index + 2, "Min Level", row[MINIMUM_COLUMN - 1]),
+      warning: nonNegativeNumber(SHEET, index + 2, "Warn Level", row[WARNING_COLUMN - 1]),
     }));
 
 }
