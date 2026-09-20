@@ -20,6 +20,7 @@ export type CncOutputDefinition = {
 };
 
 export type CncRunOutput = {
+  boardsAllocated: number;
   partName: string;
   color: string;
   runDriver: boolean;
@@ -38,6 +39,13 @@ export type CncColorRun = {
 };
 
 export type CncProductionRecommendation = {
+  loadCount: number;
+  fullLoadCount: number;
+  partialLoadBoards: number;
+  totalPhysicalBoards: number;
+  customerColorBoards: number;
+  fixedColorBoards: number;
+  boardAllocations: { color: string; boards: number }[];
   fileName: string;
   completeRunsRequired: number;
   totalBoardsPerRun: number;
@@ -49,7 +57,44 @@ export type CncProductionRecommendation = {
   validationErrors: string[];
 };
 
-export function calculateCncRun(partsNeeded: number, qtyPerBoard: number, boardsPerFile: number): CncRunPlan {
+function mixedColorLoad(
+  output: CncOutputDefinition,
+  requirements: { part: string; color: string; shortage: number }[],
+  remaining: Map<string, number>,
+): CncProductionRecommendation | undefined {
+  if (!Number.isInteger(output.qtyPerBoard) || output.qtyPerBoard <= 0 || !Number.isInteger(output.boardsPerFile) || output.boardsPerFile <= 0) {
+    throw new Error(`Invalid CNC board capacity for ${output.fileName}`);
+  }
+  const colors = [...new Set(requirements.filter((r) => r.part === output.partName).map((r) => r.color))];
+  const boardAllocations: { color: string; boards: number }[] = [];
+  const produced: CncRunOutput[] = [];
+  for (const color of colors) {
+    const key = `${output.partName}|${color}`;
+    const partsNeeded = remaining.get(key) ?? 0;
+    const boards = Math.ceil(partsNeeded / output.qtyPerBoard);
+    if (boards === 0) continue;
+    const expectedOutput = boards * output.qtyPerBoard;
+    boardAllocations.push({ color, boards });
+    produced.push({ boardsAllocated: boards, partName: output.partName, color, runDriver: output.runDriver, partsNeeded,
+      partsPerRun: partsPerRun(output), quantityProduced: expectedOutput, quantityCredited: partsNeeded,
+      expectedOutput, expectedSurplus: expectedOutput - partsNeeded });
+    remaining.set(key, 0);
+  }
+  const boards = boardAllocations.reduce((sum, a) => sum + a.boards, 0);
+  if (boards === 0) return;
+  const fullLoadCount = Math.floor(boards / output.boardsPerFile);
+  return {
+    fileName: output.fileName, loadCount: Math.ceil(boards / output.boardsPerFile), fullLoadCount,
+    partialLoadBoards: boards % output.boardsPerFile, totalPhysicalBoards: boards,
+    customerColorBoards: boards, fixedColorBoards: 0, boardAllocations,
+    completeRunsRequired: fullLoadCount, totalBoardsPerRun: output.boardsPerFile,
+    customerColorBoardsPerRun: output.boardsPerFile, fixedColorBoardsPerRun: 0,
+    // Colours share loads; none is assigned a separate complete run.
+    colorRuns: [], outputs: produced, manualCustomerColorRunsRequired: 0, validationErrors: [],
+  };
+}
+
+export function calculateCncRun(partsNeeded: number, qtyPerBoard: number, boardsPerFile: number, allowPartialLoad = false): CncRunPlan {
   if (!Number.isFinite(partsNeeded) || partsNeeded < 0) {
     throw new Error("Parts needed must be a non-negative finite number.");
   }
@@ -61,9 +106,9 @@ export function calculateCncRun(partsNeeded: number, qtyPerBoard: number, boards
   }
 
   const partsPerFullRun = qtyPerBoard * boardsPerFile;
-  const fullRunsNeeded = Math.ceil(partsNeeded / partsPerFullRun);
-  const boardsToRun = fullRunsNeeded * boardsPerFile;
-  const expectedOutput = fullRunsNeeded * partsPerFullRun;
+  const boardsToRun = allowPartialLoad ? Math.ceil(partsNeeded / qtyPerBoard) : Math.ceil(partsNeeded / partsPerFullRun) * boardsPerFile;
+  const fullRunsNeeded = Math.floor(boardsToRun / boardsPerFile);
+  const expectedOutput = boardsToRun * qtyPerBoard;
 
   return {
     partsNeeded,
@@ -145,6 +190,13 @@ export function calculateGroupedCncRuns(
 
   for (const [fileName, fileOutputs] of groups) {
     const boardAllocations = physicalBoardAllocations(fileName, fileOutputs);
+    // Standalone variable-colour files allow mixed boards and a partial final load.
+    // Grouped recipes retain their explicit simultaneous output/material allocations.
+    if (fileOutputs.length === 1 && fileOutputs[0].multiColor && fileOutputs[0].runDriver) {
+      const recommendation = mixedColorLoad(fileOutputs[0], requirements, remaining);
+      if (recommendation) recommendations.push(recommendation);
+      continue;
+    }
     const driverOutputs = fileOutputs.filter((output) => output.runDriver);
     const remainingBeforeFile = new Map(remaining);
     const customerColorOutputs = driverOutputs.filter((output) => output.multiColor);
@@ -187,6 +239,7 @@ export function calculateGroupedCncRuns(
         const quantityCredited = Math.min(expectedOutput, remaining.get(key) ?? 0);
         remaining.set(key, Math.max((remaining.get(key) ?? 0) - quantityCredited, 0));
         return {
+          boardsAllocated: completeRunsRequired * output.boardsPerFile,
           partName: output.partName,
           color: outputColor,
           runDriver: output.runDriver,
@@ -217,6 +270,7 @@ export function calculateGroupedCncRuns(
       const credited = Math.min(produced, required);
       remaining.set(key, Math.max(required - credited, 0));
       return [{
+        boardsAllocated: completeRuns * output.boardsPerFile,
         partName: output.partName,
         color: output.fixedColor,
         runDriver: output.runDriver,
@@ -231,6 +285,22 @@ export function calculateGroupedCncRuns(
 
     if (completeRuns > 0) {
       recommendations.push({
+      loadCount: completeRuns,
+      fullLoadCount: completeRuns,
+      partialLoadBoards: 0,
+      totalPhysicalBoards: completeRuns * totalBoardsPerRun,
+      customerColorBoards: completeRuns * customerColorBoardsPerRun,
+      fixedColorBoards: completeRuns * fixedColorBoardsPerRun,
+      boardAllocations: [
+        ...colorRuns.filter((run) => run.completeRunsRequired > 0 && customerColorBoardsPerRun > 0).map((run) => ({ color: run.color, boards: run.completeRunsRequired * customerColorBoardsPerRun })),
+        ...boardAllocations.filter((output) => !output.multiColor).map((output) => ({ color: output.fixedColor, boards: completeRuns * output.boardsPerFile })),
+        ...(manualCustomerColorRunsRequired > 0 && customerColorBoardsPerRun > 0 ? [{ color: "Select customer color", boards: manualCustomerColorRunsRequired * customerColorBoardsPerRun }] : []),
+      ].reduce<{ color: string; boards: number }[]>((allocations, allocation) => {
+        const existing = allocations.find((a) => a.color === allocation.color);
+        if (existing) existing.boards += allocation.boards;
+        else allocations.push({ ...allocation });
+        return allocations;
+      }, []),
       fileName,
       completeRunsRequired: completeRuns,
       totalBoardsPerRun,

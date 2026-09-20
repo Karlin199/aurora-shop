@@ -107,7 +107,9 @@ test("accepts a CNC part with a complete authoritative mapping", () => {
   );
 
   assert.equal(result[0].cnc?.partsPerFullRun, 78);
-  assert.equal(result[0].cnc?.fullRunsNeeded, 1);
+  assert.equal(result[0].cnc?.fullRunsNeeded, 0);
+  assert.equal(result[0].cnc?.boardsToRun, 1);
+  assert.equal(result[0].cnc?.expectedOutput, 6);
 });
 
 test("retains separate CNC rows that share one FileName", () => {
@@ -148,7 +150,7 @@ test("retains separate CNC rows that share one FileName", () => {
     expectedOutput: requirement.cnc?.expectedOutput,
     expectedSurplus: requirement.cnc?.expectedSurplus,
   })), [
-    { part: "Ottoman Front Slat", color: "Cherrywood", partsPerFullRun: 6, fullRunsNeeded: 2, boardsToRun: 6, expectedOutput: 12, expectedSurplus: 5 },
+    { part: "Ottoman Front Slat", color: "Cherrywood", partsPerFullRun: 6, fullRunsNeeded: 1, boardsToRun: 4, expectedOutput: 8, expectedSurplus: 1 },
     { part: "Ottoman Base Top", color: "Black", partsPerFullRun: 6, fullRunsNeeded: 1, boardsToRun: 2, expectedOutput: 6, expectedSurplus: 1 },
     { part: "Ottoman Side", color: "Black", partsPerFullRun: 20, fullRunsNeeded: 2, boardsToRun: 10, expectedOutput: 40, expectedSurplus: 19 },
   ]);
@@ -396,4 +398,11 @@ test("live Ottoman driver/byproducts retain four separate boards despite equal b
   assert.equal(runs[0].customerColorBoardsPerRun, 2);
   assert.equal(runs[0].fixedColorBoardsPerRun, 2);
   assert.deepEqual(runs[0].outputs.map((o) => o.expectedOutput), [4, 4, 4, 8]);
+  const twoColors = calculateGroupedCncRuns([
+    { part: "Ottoman Leg", color: "Cherrywood", shortage: 8 },
+    { part: "Ottoman Leg", color: "Granite", shortage: 8 },
+  ], outputs)[0];
+  assert.equal(twoColors.loadCount, 2);
+  assert.equal(twoColors.totalPhysicalBoards, 8);
+  assert.deepEqual(twoColors.boardAllocations, [{ color: "Cherrywood", boards: 2 }, { color: "Granite", boards: 2 }, { color: "Black", boards: 4 }]);
 });

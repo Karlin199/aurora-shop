@@ -14,7 +14,6 @@ export type ProductionColour = {
   partsPerBoard: number;
   boardsRequired: number;
   partsPerFullRun: number;
-  fullRunsNeeded: number;
   expectedOutput: number;
   expectedSurplus: number;
 };
@@ -33,8 +32,11 @@ export type ProductionMachine = {
   cncRuns: CncProductionRecommendation[];
 };
 
-function toProductionColour(requirement: Requirement): ProductionColour {
+function toProductionColour(requirement: Requirement, recommendations: CncProductionRecommendation[]): ProductionColour {
   const cnc = requirement.cnc;
+  const plannedOutputs = recommendations.flatMap((run) => run.outputs
+    .filter((output) => output.partName === requirement.part && output.color === requirement.color));
+  const expectedOutput = plannedOutputs.reduce((sum, output) => sum + output.expectedOutput, 0);
   return {
     colour: requirement.color,
     required: requirement.required,
@@ -42,11 +44,10 @@ function toProductionColour(requirement: Requirement): ProductionColour {
     toCut: requirement.shortage,
     cncFile: requirement.cncFile ?? "",
     partsPerBoard: cnc?.qtyPerBoard ?? 0,
-    boardsRequired: cnc?.boardsToRun ?? 0,
+    boardsRequired: plannedOutputs.reduce((sum, output) => sum + output.boardsAllocated, 0),
     partsPerFullRun: cnc?.partsPerFullRun ?? 0,
-    fullRunsNeeded: cnc?.fullRunsNeeded ?? 0,
-    expectedOutput: cnc?.expectedOutput ?? 0,
-    expectedSurplus: cnc?.expectedSurplus ?? 0,
+    expectedOutput,
+    expectedSurplus: Math.max(expectedOutput - requirement.shortage, 0),
   };
 }
 
@@ -80,7 +81,7 @@ export async function getProduction(): Promise<ProductionMachine[]> {
     if (requirement.shortage === 0) continue;
     const partGroups = grouped.get(requirement.machine) ?? new Map<string, ProductionColour[]>();
     const colours = partGroups.get(requirement.part) ?? [];
-    colours.push(toProductionColour(requirement));
+    colours.push(toProductionColour(requirement, plan.cncRuns));
     partGroups.set(requirement.part, colours);
     grouped.set(requirement.machine, partGroups);
   }

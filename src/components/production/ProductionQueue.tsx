@@ -43,10 +43,19 @@ export default function ProductionQueue({
         <div className="space-y-6">
           {cncRuns.map((run) => (
             <div key={run.fileName} className="rounded-xl border border-blue-700 bg-blue-950/30 p-6">
-              <h3 className="text-3xl font-extrabold">CNC Run: {run.fileName}</h3>
+              <h3 className="text-3xl font-extrabold">CNC Load: {run.fileName}</h3>
               <p className="mt-2 text-xl text-gray-300">
-                {run.completeRunsRequired} complete run{run.completeRunsRequired === 1 ? "" : "s"} · {run.totalBoardsPerRun} boards per run · {run.customerColorBoardsPerRun} customer-color · {run.fixedColorBoardsPerRun} black
+                {run.fullLoadCount > 0 && `${run.fullLoadCount} full load${run.fullLoadCount === 1 ? "" : "s"}`}
+                {run.fullLoadCount > 0 && run.partialLoadBoards > 0 && " + "}
+                {run.partialLoadBoards > 0 && `1 partial load · ${run.partialLoadBoards} of ${run.totalBoardsPerRun} board positions used`}
+                {run.partialLoadBoards === 0 && ` · ${run.totalBoardsPerRun} of ${run.totalBoardsPerRun} board positions per load`}
               </p>
+              <p className="mt-2 text-gray-300">{run.totalPhysicalBoards} physical boards total · {run.loadCount} load{run.loadCount === 1 ? "" : "s"}</p>
+              <ul className="mt-3 space-y-1">
+                {run.boardAllocations.map((allocation) => (
+                  <li key={allocation.color}>{allocation.color}: {allocation.boards} board{allocation.boards === 1 ? "" : "s"}</li>
+                ))}
+              </ul>
               {run.validationErrors.map((error) => (
                 <p key={error} className="mt-3 font-semibold text-amber-300">{error}</p>
               ))}
@@ -54,7 +63,7 @@ export default function ProductionQueue({
                 {run.outputs.map((output) => (
                   <div key={`${output.partName}-${output.color}`} className="rounded-lg bg-[#151c28] px-4 py-3">
                     <div className="font-bold">{output.partName} · {output.color}</div>
-                    <div className="text-lg">{output.expectedOutput} expected / {output.expectedSurplus} surplus</div>
+                    <div className="text-lg">{output.boardsAllocated} board{output.boardsAllocated === 1 ? "" : "s"} → {output.expectedOutput} expected / {output.expectedSurplus} surplus</div>
                   </div>
                 ))}
               </div>

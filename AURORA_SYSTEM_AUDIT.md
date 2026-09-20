@@ -1,5 +1,43 @@
 # Aurora Outdoor Furniture Manufacturing System Audit
 
+## Latest verification: mixed-colour CNC loads — 2026-09-19
+
+This section supersedes earlier load counts and material totals below. Read-only live verification and the API's `getProduction` service both confirm **9 loads and 86 physical boards**, comprising **6 full fixed-colour loads, 3 partial customer-colour loads, 74 Black boards and 12 customer-colour boards**. The earlier 15 loads / 152 boards is obsolete.
+
+Root cause: standalone MultiColor files rounded each colour's demand to an entire file, then credited that colour with the full file capacity. They now round separately by board (`ceil(shortage / QtyPerBoard)`), add those physical boards, and pack them into loads using `BoardsPerFile` as capacity. Expected output is allocated boards times QtyPerBoard. The last load may be partial. Fixed-colour full-load behavior is unchanged.
+
+### Current live recommendations
+
+For each of Toffee, Granite and Marble:
+
+| File | Shortage per colour | Boards per colour | Expected per colour | Surplus per colour | Shared load |
+|---|---:|---:|---:|---:|---|
+| 5x12 Luxe Arms | 4 | 1 | 7 | 3 | 1 partial, 3/9 positions |
+| 5x12 Luxe Table Top | 3 | 1 | 7 | 4 | 1 partial, 3/9 positions |
+| Front Slat Logo | 2 | 2 | 2 | 0 | 1 partial, 6/8 positions |
+
+`5x12 Sapphire Table Top` has no active demand and schedules zero loads. Its live definition is 7 parts/board and 9 boards/load. The same standalone packing path covers it, Sapphire Arms (7/9), Sapphire Back (1/13), and any other standalone MultiColor file. No customer-identifying information is included.
+
+The active demand totals remain 1 order, 9 lines, 9 finished units, 216 required parts across 32 part/colour combinations; CNC shortages are 93 parts and non-CNC shortages 123. All 118 inventory quantities remain valid zero values. No CNC shortages remain uncovered by planned output.
+
+Base Bottom remains one full 9-Black-board load producing 36 Base Bottoms and 18 Table Uprights, covering 6 of each with surpluses 30 and 12; the separate Uprights fallback is not scheduled. Gliding Ottoman retains its simultaneous four-output recipe and four separate physical boards per load: two customer-colour and two Black. Its current customer-colour allocations each occupy one board, so no separate colour capacity is multiplied into output. It has no current active demand. New grouped recipes with larger/mixed board allocations would need explicit physical nesting rules before treating all their positions as interchangeable.
+
+### Implementation and checks
+
+- `src/lib/domain/cncCalculations.ts`: adds actual load counts, full/partial utilization, physical board totals and per-colour allocations. Standalone MultiColor outputs use board rounding; existing fixed/shared recipes retain their material rules. `completeRunsRequired` now counts only full loads; consumers must use `loadCount` for the total including a partial load. Each output exposes `boardsAllocated`; shared outputs may refer to the same boards, so use `totalPhysicalBoards` for material totals.
+- `src/lib/domain/productionCalculations.ts`: per-colour preliminary calculations also use board-rounded output for MultiColor definitions.
+- `src/services/production.ts`: API part summaries derive expected output and boards from the grouped plan rather than independent whole-file estimates. Removes the misleading per-colour `fullRunsNeeded` field. The existing GET route serializes this updated service response without a second formula.
+- `src/components/production/ProductionQueue.tsx`: displays CNC Load, full/partial counts, used/capacity positions, physical totals, per-colour boards and per-output expected production/surplus.
+- `src/lib/domain/mixedColorLoads.test.ts`: seven focused tests cover mixed partial loads, per-colour rounding, 20 boards in 9-position loads, exact multiples, generic MultiColor file names, preserved fixed output, stock subtraction and unchanged inventory.
+- `src/lib/domain/productionCalculations.test.ts`: updates preliminary board-rounded expectations and verifies Ottoman's two-colour plan retains four Black boards plus two boards of each customer colour across two loads. Existing Base Bottom/fallback regressions remain active.
+- `scripts/verify-production.mjs`: reports actual load/board totals and verifies API service summaries through server-side reads.
+- `npm test`: 35 passed. `npx tsc --noEmit`: passed. `npm run build`: passed. `npm run lint`: still fails with the same 15 existing errors and 4 warnings in UI/hooks/types and unused values; no new lint findings in the calculation changes.
+- ProductionQueue was rendered with React server rendering against the three-board and twenty-board fixtures: verified partial/full labels and absence of “complete run” wording. No browser visual inspection was performed in this update.
+
+No Sheets writes, inventory updates, authentication, or transactional completion changes were made. Planning output is not inventory. Existing metadata for other fixed-colour capacities was preserved, not independently remeasured.
+
+---
+
 ## Read-only production re-verification — 2026-09-19
 
 Updated after owner confirmation of shared physical boards: one `5x12 Base Bottom` run uses **9 Black boards**, producing **36 Base Bottoms and 18 Table Uprights**. Earlier 52-part and 22-board results are invalid and superseded.

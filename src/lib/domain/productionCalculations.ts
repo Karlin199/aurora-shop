@@ -178,7 +178,7 @@ export function calculateProduction(
       inStock,
       shortage,
       machine: partInfo?.primaryMachine ?? "Unassigned",
-      cnc: cncFile && shortage > 0 ? calculateCncRun(shortage, cncFile.qtyPerBoard, cncFile.boardsPerFile) : undefined,
+      cnc: cncFile && shortage > 0 ? calculateCncRun(shortage, cncFile.qtyPerBoard, cncFile.boardsPerFile, cncFile.multiColor) : undefined,
       cncFile: cncFile?.fileName,
     };
   });
